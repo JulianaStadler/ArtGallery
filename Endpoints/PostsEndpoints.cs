@@ -1,5 +1,13 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using ArtGallery.UseCases.Post.Comment;
+using ArtGallery.UseCases.Post.Delete;
+using ArtGallery.UseCases.Post.DeleteComment;
+using ArtGallery.UseCases.Post.Deslike;
+using ArtGallery.UseCases.Post.Edit;
+using ArtGallery.UseCases.Post.Like;
+using ArtGallery.UseCases.User.SeeFeed;
+using ArtGallery.UseCases.User.SeePost;
 
 namespace ArtGallery.Endpoints;
 
@@ -7,65 +15,112 @@ public static class PostsEndpoints
 {
     public static void ConfigurePostEndpoints(this WebApplication app)
     {
-        // GET: /post/{id}
-        app.MapGet("post/{id}", (string id) =>
+        // ------------------------ EDIT POST ------------------------ //
+        app.MapPatch("/users/{id}/posts/{postId}", async (
+            Guid id,
+            Guid postId,
+            HttpContext http,
+            [FromBody] EditPayload payload,
+            [FromServices] EditUseCase useCase
+        ) =>
         {
-            // TODO: Implementar lógica para obter post por ID
+            return Results.Ok();
+        }).RequireAuthorization();
+
+
+        // ----------------------- LIST POSTS ------------------------ //
+        app.MapGet("/users/{id}/posts/", async (
+            Guid id,
+            [FromServices] SeeFeedUseCase useCase,
+            [FromServices] IUserService thisUserExist
+        ) =>
+        {
             return Results.Ok();
         });
 
-        // POST: /post
-        app.MapPost("post", async (
-            [FromBody] object payload, // Substituir pelo tipo correto (ex: PublishPostPayload)
-            [FromServices] object useCase // Substituir pelo tipo correto (ex: PublishPostUseCase)
+
+        // ------------------------ SHOW POST ----------------------- //
+        app.MapGet("/users/{id}/posts/{postid}", async (
+            Guid id,
+            Guid postId,
+            [FromServices] SeePostUseCase useCase,
+            [FromServices] IUserService thisUserExist,
+            [FromServices] IPostService thisPostExist
         ) =>
         {
-            // TODO: Implementar lógica para publicar post
             return Results.Ok();
         });
 
-        // PUT: /post/{id} (atualização completa)
-        app.MapPut("post/{id}", async (
-            string id,
-            [FromBody] object payload, // Substituir pelo tipo correto (ex: UpdatePostPayload)
+
+        // ----------------------- DELETE POST ----------------------- //
+        app.MapDelete("/users/{id}/posts/{postid}", async (
+            Guid id,
+            Guid postId,
             HttpContext http,
-            [FromServices] object useCase // Substituir pelo tipo correto (ex: UpdatePostUseCase)
+            [FromServices] SeePostUseCase useCase,
+            [FromServices] IUserService thisUserExist,
+            [FromServices] IPostService thisPostExist
         ) =>
         {
-            // TODO: Implementar lógica para atualizar post completo
-            var claim = http.User.FindFirst(ClaimTypes.NameIdentifier);
-            var userId = claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-
             return Results.Ok();
         }).RequireAuthorization();
 
-        // PATCH: /post/{id} (atualização parcial)
-        app.MapPatch("post/{id}", async (
-            string id,
-            [FromBody] object payload, // Substituir pelo tipo correto (ex: PatchPostPayload)
+
+
+        // // ---------------------- ADD POST TAG ----------------------- //
+        // app.MapPost("/users/{id}/posts/{postid}/tags/{tagId}", async (
+        //     Guid id,
+        //     Guid postId,
+        //     HttpContext http,
+        //     [FromServices] TaUseCase useCase,
+        //     [FromServices] IUserService thisUserExist,
+        //     [FromServices] IPostService thisPostExist
+        // ) =>
+        // {
+        //     return Results.Ok();
+        // }).RequireAuthorization();
+
+
+        // // --------------------- REMOVE POST TAG --------------------- //
+        // app.MapDelete("/users/{id}/posts/{postid}/{tagId}", async (
+        //     Guid id,
+        //     Guid postId,
+        //     HttpContext http,
+        //     [FromServices] SeePostUseCase useCase,
+        //     [FromServices] IUserService thisUserExist,
+        //     [FromServices] IPostService thisPostExist
+        // ) =>
+        // {
+        //     return Results.Ok();
+        // }).RequireAuthorization();
+
+
+        // ------------------------- COMMENT ------------------------- //
+        app.MapPost("/users/{id}/posts/{postid}/comment/", async (
+            Guid id,
+            Guid postId,
             HttpContext http,
-            [FromServices] object useCase // Substituir pelo tipo correto (ex: PatchPostUseCase)
+            [FromServices] CommentUseCase useCase,
+            [FromServices] IUserService thisUserExist,
+            [FromServices] IPostService thisPostExist
         ) =>
         {
-            // TODO: Implementar lógica para atualização parcial do post
-            var claim = http.User.FindFirst(ClaimTypes.NameIdentifier);
-            var userId = claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-
             return Results.Ok();
         }).RequireAuthorization();
 
-        // DELETE: /post/{id}
-        app.MapDelete("post/{id}", async (
-            string id,
+        // --------------------- DELETE COMMENT ---------------------- //
+        app.MapDelete("/users/{id}/posts/{postid}/{commentId}", async (
+            Guid id,
+            Guid postId,
+            Guid commentId,
             HttpContext http,
-            [FromServices] object useCase // Substituir pelo tipo correto (ex: DeletePostUseCase)
+            [FromServices] DeleteCommentUseCase useCase,
+            [FromServices] IUserService thisUserExist,
+            [FromServices] IPostService thisPostExist
         ) =>
         {
-            // TODO: Implementar lógica para deletar post
-            var claim = http.User.FindFirst(ClaimTypes.NameIdentifier);
-            var userId = claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-
             return Results.Ok();
         }).RequireAuthorization();
+
     }
 }
