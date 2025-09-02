@@ -8,6 +8,8 @@ using ArtGallery.UseCases.Post.Edit;
 using ArtGallery.UseCases.Post.Like;
 using ArtGallery.UseCases.User.SeeFeed;
 using ArtGallery.UseCases.User.SeePost;
+using ArtGallery.Services.Posts;
+using ArtGallery.Services.Users;
 
 namespace ArtGallery.Endpoints;
 
