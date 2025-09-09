@@ -13,29 +13,29 @@ using ArtGallery.UseCases.User.SeeFeed;
 using ArtGallery.UseCases.User.SeePost;
 using ArtGallery.UseCases.User.UnFollowTag;
 using ArtGallery.UseCases.User.UnFollowUser;
+using ArtGallery.Services.Posts;
+using ArtGallery.Services.Users;
 
 namespace ArtGallery.Endpoints;
 
 public static class UsersEndpoints
 {
-    public static void ConfigurePostEndpoints(this WebApplication app)
+    public static void ConfigureUserEndpoints(this WebApplication app)
     {
         // -------------------------- CREATE ACCOUNT -------------------------- //
-        app.MapPost("users", async (
+        app.MapPost("/users", async (
             [FromBody] CreateAccountPayload payload,
             [FromServices] CreateAccountUseCase useCase
         ) =>
         {
-            return Results.Ok();
-        });
+            var result = await useCase.Do(payload);
 
-        // --------------------- SEARCH ALL USERS ----------------------- //
-        app.MapGet("/users/", async (
-            [FromBody] CreateAccountPayload payload,
-            [FromServices] CreateAccountUseCase useCase
-        ) =>
-        {
-            return Results.Ok();
+            return (result.IsSuccess, result.Reason) switch
+            {
+                (false, "Error exemple") => Results.NotFound(result.Reason),
+                (false, _) => Results.BadRequest(result.Reason),
+                (true, _) => Results.Ok(result.Data)
+            };
         });
 
         // --------------------- SEARCH USER ------------------------ //
@@ -45,7 +45,15 @@ public static class UsersEndpoints
             [FromServices] IUserService thisUserExist
         ) =>
         {
-            return Results.Ok();
+            var payload = new SearchUserPayload{ Id = id };
+            var result = await useCase.Do(payload);
+
+            return (result.IsSuccess, result.Reason) switch
+            {
+                (false, "User not found") => Results.NotFound(result.Reason),
+                (false, _) => Results.BadRequest(result.Reason),
+                (true, _) => Results.Ok(result.Data)
+            };
         });
 
 
@@ -57,6 +65,8 @@ public static class UsersEndpoints
             [FromServices] EditAccountUseCase useCase
         ) =>
         {
+            
+
             return Results.Ok();
         }).RequireAuthorization();
 
