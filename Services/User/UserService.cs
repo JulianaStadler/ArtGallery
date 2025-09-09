@@ -15,7 +15,7 @@ public class UserService(ArtGalleryDbContext ctx) : IUserService
         var thisUsernameIsInUse = await ctx.Users.FirstOrDefaultAsync(u => u.Name == username);
         return thisUsernameIsInUse != null ? true : false;
     }
-    
+
     public async Task<User> FindByLogin(string login)
     {
         var user = await ctx.Users.FirstOrDefaultAsync(

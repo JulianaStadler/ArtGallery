@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using ArtGallery.UseCases.CreateAccount;
 using ArtGallery.UseCases.User.SearchUser;
+using ArtGallery.UseCases.Login;
 using ArtGallery.UseCases.CreateAccount;
 using ArtGallery.UseCases.User.CreatePost;
 using ArtGallery.UseCases.User.DeleteAccount;
@@ -22,6 +23,23 @@ public static class UsersEndpoints
 {
     public static void ConfigureUserEndpoints(this WebApplication app)
     {
+        // ------------------------------- LOGIN ------------------------------ //
+        app.MapPost("/login", async (
+            [FromBody] LoginPayload payload,
+            [FromServices] LoginUseCase useCase
+        ) =>
+        {
+            var result = await useCase.Do(payload);
+
+            return (result.IsSuccess, result.Reason) switch
+            {
+                (false, "User not found") => Results.NotFound(result.Reason),
+                (false, "Invalid email or password") => Results.Unauthorized(),
+                (false, _) => Results.BadRequest(result.Reason),
+                (true, _) => Results.Ok(result.Data)
+            };
+        });
+
         // -------------------------- CREATE ACCOUNT -------------------------- //
         app.MapPost("/users", async (
             [FromBody] CreateAccountPayload payload,
@@ -65,9 +83,25 @@ public static class UsersEndpoints
             [FromServices] EditAccountUseCase useCase
         ) =>
         {
-            
+            // cheacar se usuario esta autenticado
+            var checkUserJWT = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (checkUserJWT == null)
+                return Results.Unauthorized(); // usuario nao autenticado
+            Guid loggedUserId = Guid.Parse(checkUserJWT);
 
-            return Results.Ok();
+            // checar se o userid da acao e o mesmo do jwt
+            if (payload.UserId != loggedUserId)
+                return Results.Forbid(); // tentativa de editar outra conta
+
+
+            var result = await useCase.Do(payload);
+            return (result.IsSuccess, result.Reason) switch
+            {
+                (false, "User not found") => Results.NotFound(result.Reason),
+                (false, _) => Results.BadRequest(result.Reason),
+                (true, _) => Results.Ok(result.Data)
+            };
+
         }).RequireAuthorization();
 
 
@@ -78,7 +112,24 @@ public static class UsersEndpoints
             [FromServices] DeleteAccountUseCase useCase
         ) =>
         {
-            return Results.Ok();
+            // cheacar se usuario esta autenticado
+            var checkUserJWT = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (checkUserJWT == null)
+                return Results.Unauthorized();
+            Guid loggedUserId = Guid.Parse(checkUserJWT);
+
+            // checar se o userid da acao e o mesmo do jwt
+            if (id != loggedUserId)
+                return Results.Forbid();
+
+            var result = await useCase.Do(new DeleteAccountPayload{ UserId = id });
+            return (result.IsSuccess, result.Reason) switch
+            {
+                (false, "User not found") => Results.NotFound(result.Reason),
+                (false, _) => Results.BadRequest(result.Reason),
+                (true, _) => Results.Ok(result.Data)
+            };
+
         }).RequireAuthorization();
 
 
